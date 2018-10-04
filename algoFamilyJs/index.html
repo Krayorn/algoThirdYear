@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Arbre</title>
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></script>
+<body>
+    <div id="graphKool">
+    </div>
+    <div id="graph">
+    </div>
+
+    <script>
+
+            var matriarch = {"name":"Amélie", "age": 104, "sex": "f", "parent":null}
+
+            var tree = [
+            {"name":"Jack", "age": 86, "sex": "m", "parent":"Amélie"},
+            {"name":"Roseline", "age": 79, "sex": "f", "parent":"Amélie"},
+            {"name":"Olivier", "age": 59, "sex": "m", "parent":"Jack"},
+            {"name":"Pascal", "age": 59, "sex": "m", "parent":"Jack"},
+            {"name":"Angélique", "age": 18, "sex": "f", "parent":"Olivier"},
+            {"name":"Charlotte", "age": 22, "sex": "f", "parent":"Olivier"},
+            {"name":"Lucien", "age": 5, "sex": "m", "parent":"Olivier"},
+            {"name":"Julien", "age": 33, "sex": "f", "parent":"Pascal"},
+            {"name":"Caroline", "age": 30, "sex": "f", "parent":"Pascal"},
+            ];
+
+            function Person(data){
+                this.name = data.name
+                this.age = data.age
+                this.sex = data.sex
+                this.parent = null
+                this.gen = data.gen || 1
+                this.children = []
+            }
+            function Tree(rootData){
+            this._root = new Person(rootData);
+
+            Tree.prototype.traverse = function(callback){
+
+                (function recursive(currentNode){
+                for(var i = 0; i < currentNode.children.length; i++){
+                    recursive(currentNode.children[i]);
+                }
+                callback(currentNode);
+                })(this._root)
+            }
+
+            Tree.prototype.add = function(data){
+                var child = new Person(data),
+                    parentName = data.parent,
+                    parent = null;
+                this.traverse(function(person){
+                    if(person.name === parentName){
+                        parent = person;
+                    }
+                })
+                parent.children.push({...child, gen: parent.gen + 1});
+                child.parent = parent;
+            }
+            }
+
+            var zamor = new Tree(matriarch);
+
+            for(p in tree){
+            var person = tree[p];
+            zamor.add(person);
+            }
+
+            zamor.traverse(function(person){
+                console.log(person.name, person.age)
+            })
+
+
+
+            console.log(zamor)
+
+            var svgContainer = d3.select("#graph")
+                    .append("svg")
+                    .attr("width", 1000)
+                    .attr("height", 700)
+
+            var svgContainerKool = d3.select("#graphKool")
+                    .append("svg")
+                    .attr("width", 1000)
+                    .attr("height", 700)
+
+            function hugestGen(family){
+                let data = []
+
+                family.traverse(function(person){
+                    if (data[person.gen]) {
+                        data[person.gen]++
+                    } else {
+                        data[person.gen] = 1
+                    }
+                })
+
+                let gen = 1
+                let genCount = 0
+                data.forEach((i, x) => {
+                    if (x > genCount) {
+                        gen = i
+                        genCount = x
+                    }
+                })
+
+                return [gen, genCount]
+            }
+
+            function betterTree(family, hugestGen) {
+
+                let xByGen = []
+                family.traverse(function(person){
+                    if (xByGen[person.gen] != undefined) {
+                        xByGen[person.gen] += 900 / hugestGen[1]
+                    } else {
+                        xByGen[person.gen] = 50
+                    }
+                    var circle = svgContainerKool.append("circle")
+                        .attr("cx", xByGen[person.gen])
+                        .attr("cy", 100 * person.gen)
+                        .attr("r", 35)
+                        .style("fill", "white")
+                        .style("stroke", "red")
+
+                    var circle = svgContainerKool.append("text")
+                        .attr("x", xByGen[person.gen])
+                        .attr("y", 100 * person.gen + 5)
+                        .attr("text-anchor", "middle")
+                        .text(person.name)
+                })
+            }
+
+            betterTree(zamor, hugestGen(zamor))
+
+            function drawTreeBad(origin, gen = 1, num = 1, spaceAllowed = 1000, AreaAllowedStartingPoint = 0) {
+                var circle = svgContainer.append("circle")
+                    .attr("cx", (AreaAllowedStartingPoint + (spaceAllowed / 2 )))
+                    .attr("cy", 100 * gen )
+                    .attr("r", 35)
+                    .style("fill", "white")
+                    .style("stroke", "red")
+
+                var circle = svgContainer.append("text")
+                    .attr("x", (AreaAllowedStartingPoint + spaceAllowed / 2 ))
+                    .attr("y",  100 * gen +5)
+                    .attr("text-anchor", "middle")
+                    .text(origin.name)
+
+                    gen += 1
+                    var newNum = 0
+                    if(origin.children) {
+                        var spaceAllowedToChildren = spaceAllowed / origin.children.length
+                        origin.children.forEach(ppl => {
+                            newNum += 1
+                            drawTreeBad(ppl, gen, newNum, spaceAllowedToChildren, spaceAllowedToChildren * (newNum - 1) + AreaAllowedStartingPoint)
+                        })
+                    }
+            }
+
+            drawTreeBad(zamor._root)
+    </script>
+
+</body>
+</html>
