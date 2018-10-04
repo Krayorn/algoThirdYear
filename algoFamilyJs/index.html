@@ -33,6 +33,8 @@
                 this.sex = data.sex
                 this.parent = null
                 this.gen = data.gen || 1
+                this.x = null
+                this.y = null
                 this.children = []
             }
             function Tree(rootData){
@@ -65,15 +67,13 @@
             var zamor = new Tree(matriarch);
 
             for(p in tree){
-            var person = tree[p];
-            zamor.add(person);
+                var person = tree[p];
+                zamor.add(person);
             }
 
             zamor.traverse(function(person){
                 console.log(person.name, person.age)
             })
-
-
 
             console.log(zamor)
 
@@ -119,32 +119,51 @@
                     } else {
                         xByGen[person.gen] = 50
                     }
-                    var circle = svgContainerKool.append("circle")
-                        .attr("cx", xByGen[person.gen])
-                        .attr("cy", 100 * person.gen)
+
+                    person.x = xByGen[person.gen]
+                    person.y = 150 * person.gen
+
+                    svgContainerKool.append("circle")
+                        .attr("cx", person.x)
+                        .attr("cy", person.y)
                         .attr("r", 35)
                         .style("fill", "white")
                         .style("stroke", "red")
 
-                    var circle = svgContainerKool.append("text")
-                        .attr("x", xByGen[person.gen])
-                        .attr("y", 100 * person.gen + 5)
+                    svgContainerKool.append("text")
+                        .attr("x", person.x)
+                        .attr("y", person.y + 5)
                         .attr("text-anchor", "middle")
                         .text(person.name)
                 })
+
+                family.traverse(function(person) {
+                    if(person.children.length) {
+                        person.children.forEach(child => {
+                            svgContainerKool.append("line")
+                                .attr("x1", person.x)
+                                .attr("y1", person.y+50)
+                                .attr("x2", child.x)
+                                .attr("y2", child.y-50)
+                                .style("stroke", "#993366")
+                                .style("stroke-width", 3)
+                        })
+                    }
+                })
+
             }
 
             betterTree(zamor, hugestGen(zamor))
 
             function drawTreeBad(origin, gen = 1, num = 1, spaceAllowed = 1000, AreaAllowedStartingPoint = 0) {
-                var circle = svgContainer.append("circle")
+                svgContainer.append("circle")
                     .attr("cx", (AreaAllowedStartingPoint + (spaceAllowed / 2 )))
                     .attr("cy", 100 * gen )
                     .attr("r", 35)
                     .style("fill", "white")
                     .style("stroke", "red")
 
-                var circle = svgContainer.append("text")
+                svgContainer.append("text")
                     .attr("x", (AreaAllowedStartingPoint + spaceAllowed / 2 ))
                     .attr("y",  100 * gen +5)
                     .attr("text-anchor", "middle")
